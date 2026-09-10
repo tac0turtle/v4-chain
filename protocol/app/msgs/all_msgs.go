@@ -261,6 +261,16 @@ var (
 		"/dydxprotocol.ratelimit.MsgSetLimitParams":         {},
 		"/dydxprotocol.ratelimit.MsgSetLimitParamsResponse": {},
 
+		// canonicalusdc
+		"/dydxprotocol.canonicalusdc.MsgExecuteBackingSwap":         {},
+		"/dydxprotocol.canonicalusdc.MsgExecuteBackingSwapResponse": {},
+		"/dydxprotocol.canonicalusdc.MsgCancelBackingSwap":          {},
+		"/dydxprotocol.canonicalusdc.MsgCancelBackingSwapResponse":  {},
+		"/dydxprotocol.canonicalusdc.MsgUpdateControls":             {},
+		"/dydxprotocol.canonicalusdc.MsgUpdateControlsResponse":     {},
+		"/dydxprotocol.canonicalusdc.MsgUpdateParticipants":         {},
+		"/dydxprotocol.canonicalusdc.MsgUpdateParticipantsResponse": {},
+
 		// sending
 		"/dydxprotocol.sending.MsgCreateTransfer":                  {},
 		"/dydxprotocol.sending.MsgCreateTransferResponse":          {},

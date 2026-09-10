@@ -213,6 +213,38 @@ const GenesisState = `{
         "eth_block_height": 0
       }
     },
+    "canonicalusdc": {
+      "controls": {
+        "mode": "MODE_DISABLED",
+        "logical_denom": "ibc/8E27BA2D5493AF5636760E354E46004562C46AB7EC0CC4C1CA14E9E20E2545B5",
+        "noble_channel": "",
+        "injective_channel": "",
+        "injective_packet_denom": "",
+        "injective_denom": "",
+        "noble_withdrawals_enabled": false,
+        "noble_withdrawal_cutoff_timestamp": "0",
+        "max_transfer_amount": "",
+        "migration_ceiling": "",
+        "max_pending_settlements": 0,
+        "memo_version": 1,
+        "noble_packet_denom": "",
+        "noble_client": "",
+        "noble_connection": "",
+        "injective_client": "",
+        "injective_connection": ""
+      },
+      "ledger": {
+        "noble_backing": "0",
+        "injective_backing": "0",
+        "legacy_downstream": "0",
+        "restricted_funding": "0",
+        "pending_injective": "0",
+        "pending_noble": "0",
+        "pending_backing_swap": "0"
+      },
+      "participants": [],
+      "pending_settlements": []
+    },
     "capability": {
       "index": "1",
       "owners": []

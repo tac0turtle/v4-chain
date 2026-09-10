@@ -125,6 +125,12 @@ func TestNormalMsgs_Key(t *testing.T) {
 		"/dydxprotocol.affiliates.MsgRegisterAffiliate",
 		"/dydxprotocol.affiliates.MsgRegisterAffiliateResponse",
 
+		// canonicalusdc
+		"/dydxprotocol.canonicalusdc.MsgCancelBackingSwap",
+		"/dydxprotocol.canonicalusdc.MsgCancelBackingSwapResponse",
+		"/dydxprotocol.canonicalusdc.MsgExecuteBackingSwap",
+		"/dydxprotocol.canonicalusdc.MsgExecuteBackingSwapResponse",
+
 		// clob
 		"/dydxprotocol.clob.MsgBatchCancel",
 		"/dydxprotocol.clob.MsgBatchCancelResponse",

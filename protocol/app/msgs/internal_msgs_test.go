@@ -95,6 +95,12 @@ func TestInternalMsgSamples_Gov_Key(t *testing.T) {
 		"/dydxprotocol.bridge.MsgUpdateSafetyParams",
 		"/dydxprotocol.bridge.MsgUpdateSafetyParamsResponse",
 
+		// canonicalusdc
+		"/dydxprotocol.canonicalusdc.MsgUpdateControls",
+		"/dydxprotocol.canonicalusdc.MsgUpdateControlsResponse",
+		"/dydxprotocol.canonicalusdc.MsgUpdateParticipants",
+		"/dydxprotocol.canonicalusdc.MsgUpdateParticipantsResponse",
+
 		// clob
 		"/dydxprotocol.clob.MsgCreateClobPair",
 		"/dydxprotocol.clob.MsgCreateClobPairResponse",
