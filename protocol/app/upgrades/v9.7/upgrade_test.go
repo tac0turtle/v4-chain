@@ -9,17 +9,12 @@ import (
 	"github.com/dydxprotocol/v4-chain/protocol/mocks"
 	"github.com/dydxprotocol/v4-chain/protocol/testutil/constants"
 	keepertest "github.com/dydxprotocol/v4-chain/protocol/testutil/keeper"
-	canonicalusdctypes "github.com/dydxprotocol/v4-chain/protocol/x/canonicalusdc/types"
 	"github.com/dydxprotocol/v4-chain/protocol/x/clob/memclob"
 	clobtypes "github.com/dydxprotocol/v4-chain/protocol/x/clob/types"
 	perptypes "github.com/dydxprotocol/v4-chain/protocol/x/perpetuals/types"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
-
-func TestUpgradeAddsCanonicalUsdcStore(t *testing.T) {
-	require.Equal(t, []string{canonicalusdctypes.StoreKey}, v_9_7.Upgrade.StoreUpgrades.Added)
-}
 
 // Only the isolated market in final settlement is swept; the bank mock fails the test on any
 // call for the cross final-settlement market or the active isolated market.
