@@ -19,7 +19,6 @@ import (
 	"github.com/dydxprotocol/v4-chain/protocol/lib"
 	accountplus "github.com/dydxprotocol/v4-chain/protocol/x/accountplus/types"
 	affiliates "github.com/dydxprotocol/v4-chain/protocol/x/affiliates/types"
-	canonicalusdc "github.com/dydxprotocol/v4-chain/protocol/x/canonicalusdc/types"
 	clob "github.com/dydxprotocol/v4-chain/protocol/x/clob/types"
 	listing "github.com/dydxprotocol/v4-chain/protocol/x/listing/types"
 	sending "github.com/dydxprotocol/v4-chain/protocol/x/sending/types"
@@ -235,12 +234,6 @@ var (
 		"/dydxprotocol.clob.MsgPlaceOrderResponse":     nil,
 		"/dydxprotocol.clob.MsgUpdateLeverage":         &clob.MsgUpdateLeverage{},
 		"/dydxprotocol.clob.MsgUpdateLeverageResponse": nil,
-
-		// canonicalusdc
-		"/dydxprotocol.canonicalusdc.MsgExecuteBackingSwap":         &canonicalusdc.MsgExecuteBackingSwap{},
-		"/dydxprotocol.canonicalusdc.MsgExecuteBackingSwapResponse": nil,
-		"/dydxprotocol.canonicalusdc.MsgCancelBackingSwap":          &canonicalusdc.MsgCancelBackingSwap{},
-		"/dydxprotocol.canonicalusdc.MsgCancelBackingSwapResponse":  nil,
 
 		// listing
 		"/dydxprotocol.listing.MsgCreateMarketPermissionless":         &listing.MsgCreateMarketPermissionless{},

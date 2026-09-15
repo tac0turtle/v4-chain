@@ -88,7 +88,6 @@ func IsInternalMsg(msg sdk.Msg) bool {
 
 		// canonicalusdc
 		*canonicalusdc.MsgUpdateControls,
-		*canonicalusdc.MsgUpdateParticipants,
 
 		// clob
 		*clob.MsgCreateClobPair,

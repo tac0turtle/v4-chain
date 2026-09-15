@@ -226,7 +226,6 @@ const GenesisState = `{
         "max_transfer_amount": "",
         "migration_ceiling": "",
         "max_pending_settlements": 0,
-        "memo_version": 1,
         "noble_packet_denom": "",
         "noble_client": "",
         "noble_connection": "",
@@ -237,12 +236,9 @@ const GenesisState = `{
         "noble_backing": "0",
         "injective_backing": "0",
         "legacy_downstream": "0",
-        "restricted_funding": "0",
         "pending_injective": "0",
-        "pending_noble": "0",
-        "pending_backing_swap": "0"
+        "pending_noble": "0"
       },
-      "participants": [],
       "pending_settlements": []
     },
     "capability": {
