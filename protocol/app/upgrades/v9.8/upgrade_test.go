@@ -45,19 +45,34 @@ func TestUpgradeInitializesCanonicalUsdc(t *testing.T) {
 	genesis := canonicalusdc.ExportGenesis(ctx, *app.CanonicalUsdcKeeper)
 	require.Equal(t, canonicalusdctypes.DefaultControls(), genesis.Controls)
 	require.Equal(t, canonicalusdctypes.Mode_MODE_DISABLED, genesis.Controls.Mode)
-	require.Equal(t, canonicalusdctypes.Ledger{
-		NobleBacking:       "0",
-		InjectiveBacking:   "0",
-		LegacyDownstream:   "0",
-		RestrictedFunding:  "0",
-		PendingInjective:   "0",
-		PendingNoble:       "0",
-		PendingBackingSwap: "0",
-	}, genesis.Ledger)
-	require.Empty(t, genesis.Participants)
+	require.Equal(t, canonicalusdctypes.DefaultLedger(), genesis.Ledger)
 	require.Empty(t, genesis.PendingSettlements)
 	require.NoError(t, genesis.Validate())
 	updatedVersions, err := app.UpgradeKeeper.GetModuleVersionMap(ctx)
 	require.NoError(t, err)
 	require.Equal(t, app.ModuleManager.GetVersionMap(), updatedVersions)
+	require.Equal(t, uint64(1), updatedVersions[canonicalusdctypes.ModuleName])
+	require.Equal(t, uint64(1), canonicalusdc.AppModule{}.ConsensusVersion())
+}
+
+func TestUpgradeIsNoOpWhenCanonicalUsdcAlreadyInitialized(t *testing.T) {
+	tApp := testapp.NewTestAppBuilder(t).Build()
+	ctx := tApp.InitChain()
+	app := tApp.App
+
+	ledger := app.CanonicalUsdcKeeper.GetLedger(ctx)
+	ledger.NobleBacking = "123"
+	require.NoError(t, app.CanonicalUsdcKeeper.SetLedger(ctx, ledger))
+	versions, err := app.UpgradeKeeper.GetModuleVersionMap(ctx)
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), versions[canonicalusdctypes.ModuleName])
+
+	plan := upgradetypes.Plan{Name: v_9_8.UpgradeName, Height: ctx.BlockHeight()}
+	require.NoError(t, app.UpgradeKeeper.ApplyUpgrade(ctx, plan))
+
+	require.Equal(t, "123", app.CanonicalUsdcKeeper.GetLedger(ctx).NobleBacking)
+	require.Equal(t, canonicalusdctypes.Mode_MODE_DISABLED, app.CanonicalUsdcKeeper.GetControls(ctx).Mode)
+	updatedVersions, err := app.UpgradeKeeper.GetModuleVersionMap(ctx)
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), updatedVersions[canonicalusdctypes.ModuleName])
 }
