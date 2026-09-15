@@ -98,8 +98,6 @@ func TestInternalMsgSamples_Gov_Key(t *testing.T) {
 		// canonicalusdc
 		"/dydxprotocol.canonicalusdc.MsgUpdateControls",
 		"/dydxprotocol.canonicalusdc.MsgUpdateControlsResponse",
-		"/dydxprotocol.canonicalusdc.MsgUpdateParticipants",
-		"/dydxprotocol.canonicalusdc.MsgUpdateParticipantsResponse",
 
 		// clob
 		"/dydxprotocol.clob.MsgCreateClobPair",

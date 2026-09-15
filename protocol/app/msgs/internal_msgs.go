@@ -197,10 +197,8 @@ var (
 		"/dydxprotocol.ratelimit.MsgSetLimitParamsResponse": nil,
 
 		// canonicalusdc
-		"/dydxprotocol.canonicalusdc.MsgUpdateControls":             &canonicalusdc.MsgUpdateControls{},
-		"/dydxprotocol.canonicalusdc.MsgUpdateControlsResponse":     nil,
-		"/dydxprotocol.canonicalusdc.MsgUpdateParticipants":         &canonicalusdc.MsgUpdateParticipants{},
-		"/dydxprotocol.canonicalusdc.MsgUpdateParticipantsResponse": nil,
+		"/dydxprotocol.canonicalusdc.MsgUpdateControls":         &canonicalusdc.MsgUpdateControls{},
+		"/dydxprotocol.canonicalusdc.MsgUpdateControlsResponse": nil,
 
 		// revshare
 		"/dydxprotocol.revshare.MsgSetMarketMapperRevShareDetailsForMarket":         &revshare.MsgSetMarketMapperRevShareDetailsForMarket{}, //nolint:lll
