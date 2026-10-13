@@ -734,6 +734,7 @@ func New(
 		appCodec,
 		keys[canonicalusdcmoduletypes.StoreKey],
 		app.BankKeeper,
+		app.RatelimitKeeper, // ICS4Wrapper
 		app.RatelimitKeeper,
 		app.IBCKeeper.ChannelKeeper,
 		app.IBCKeeper.ConnectionKeeper,
