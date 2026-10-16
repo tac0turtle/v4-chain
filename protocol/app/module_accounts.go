@@ -40,8 +40,8 @@ var (
 		// -------- dYdX custom module accounts --------
 		// bridge module account mints tokens for bridged funds.
 		bridgemoduletypes.ModuleName: {authtypes.Minter},
-		// canonicalusdc temporarily mints logical USDC for atomic backing
-		// swaps and burns locked logical USDC after physical settlement.
+		// canonicalusdc mints logical USDC for inbound Injective USDC and burns
+		// locked logical USDC after an Injective withdrawal settles.
 		canonicalusdctypes.ModuleName: {authtypes.Minter, authtypes.Burner},
 		// subaccounts module account holds tokens for all subaccounts.
 		satypes.ModuleName: nil,

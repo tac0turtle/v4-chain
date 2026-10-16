@@ -222,9 +222,8 @@ const GenesisState = `{
         "injective_packet_denom": "",
         "injective_denom": "",
         "noble_withdrawals_enabled": false,
-        "noble_withdrawal_cutoff_timestamp": "0",
-        "max_transfer_amount": "",
-        "migration_ceiling": "",
+        "max_transfer_amount": "0",
+        "migration_ceiling": "0",
         "max_pending_settlements": 0,
         "noble_packet_denom": "",
         "noble_client": "",
@@ -235,7 +234,6 @@ const GenesisState = `{
       "ledger": {
         "noble_backing": "0",
         "injective_backing": "0",
-        "legacy_downstream": "0",
         "pending_injective": "0",
         "pending_noble": "0"
       },

@@ -5,6 +5,7 @@ import (
 
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	v_9_8 "github.com/dydxprotocol/v4-chain/protocol/app/upgrades/v9.8"
+	"github.com/dydxprotocol/v4-chain/protocol/dtypes"
 	testapp "github.com/dydxprotocol/v4-chain/protocol/testutil/app"
 	canonicalusdc "github.com/dydxprotocol/v4-chain/protocol/x/canonicalusdc"
 	canonicalusdctypes "github.com/dydxprotocol/v4-chain/protocol/x/canonicalusdc/types"
@@ -61,7 +62,7 @@ func TestUpgradeIsNoOpWhenCanonicalUsdcAlreadyInitialized(t *testing.T) {
 	app := tApp.App
 
 	ledger := app.CanonicalUsdcKeeper.GetLedger(ctx)
-	ledger.NobleBacking = "123"
+	ledger.NobleBacking = dtypes.NewInt(123)
 	require.NoError(t, app.CanonicalUsdcKeeper.SetLedger(ctx, ledger))
 	versions, err := app.UpgradeKeeper.GetModuleVersionMap(ctx)
 	require.NoError(t, err)
@@ -70,7 +71,7 @@ func TestUpgradeIsNoOpWhenCanonicalUsdcAlreadyInitialized(t *testing.T) {
 	plan := upgradetypes.Plan{Name: v_9_8.UpgradeName, Height: ctx.BlockHeight()}
 	require.NoError(t, app.UpgradeKeeper.ApplyUpgrade(ctx, plan))
 
-	require.Equal(t, "123", app.CanonicalUsdcKeeper.GetLedger(ctx).NobleBacking)
+	require.Equal(t, ledger, app.CanonicalUsdcKeeper.GetLedger(ctx))
 	require.Equal(t, canonicalusdctypes.Mode_MODE_DISABLED, app.CanonicalUsdcKeeper.GetControls(ctx).Mode)
 	updatedVersions, err := app.UpgradeKeeper.GetModuleVersionMap(ctx)
 	require.NoError(t, err)

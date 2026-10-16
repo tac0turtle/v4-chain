@@ -9,6 +9,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	v_9_8 "github.com/dydxprotocol/v4-chain/protocol/app/upgrades/v9.8"
+	"github.com/dydxprotocol/v4-chain/protocol/dtypes"
 	"github.com/dydxprotocol/v4-chain/protocol/testing/containertest"
 	"github.com/dydxprotocol/v4-chain/protocol/testing/version"
 	"github.com/dydxprotocol/v4-chain/protocol/testutil/constants"
@@ -46,9 +47,9 @@ func TestCanonicalUsdcUpgrade(t *testing.T) {
 	state, ok := resp.(*canonicalusdctypes.QueryStateResponse)
 	require.True(t, ok)
 	require.Equal(t, canonicalusdctypes.Mode_MODE_DISABLED, state.Controls.Mode)
-	require.Equal(t, "0", state.Ledger.NobleBacking)
-	require.Equal(t, "0", state.Ledger.InjectiveBacking)
-	require.Empty(t, state.Ledger.PendingInjective)
+	require.Equal(t, dtypes.ZeroInt(), state.Ledger.NobleBacking)
+	require.Equal(t, dtypes.ZeroInt(), state.Ledger.InjectiveBacking)
+	require.Equal(t, dtypes.ZeroInt(), state.Ledger.PendingInjective)
 
 	require.Equal(t, aliceBefore, queryUsdcBalance(node, t, nodeAddress))
 
