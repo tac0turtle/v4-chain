@@ -69,8 +69,6 @@ message Controls {
   // Injective. Withdrawals and in-flight settlements are unaffected.
   bool injective_deposits_disabled = 13;
 
-  reserved 14;
-  reserved "max_transfer_amount";
   // migration_ceiling is the upper bound on injective_backing.
   bytes migration_ceiling = 15 [
     (gogoproto.customtype) =
