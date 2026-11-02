@@ -136,10 +136,6 @@ func (im IBCMiddleware) receiveInjective(
 	if !ok || !amount.IsPositive() {
 		return channeltypes.NewErrorAcknowledgement(types.ErrInvalidAmount)
 	}
-	maxTransfer, err := types.PositiveAmountOf(controls.MaxTransferAmount)
-	if err != nil || amount.GT(maxTransfer) {
-		return channeltypes.NewErrorAcknowledgement(types.ErrInvalidAmount)
-	}
 	receiver, err := sdk.AccAddressFromBech32(data.Receiver)
 	if err != nil {
 		return channeltypes.NewErrorAcknowledgement(err)

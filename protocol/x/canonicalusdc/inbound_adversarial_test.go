@@ -36,7 +36,6 @@ const (
 	advInjectiveCounterparty = "channel-200"
 	advThirdChannel          = "channel-2"
 	advThirdCounterparty     = "channel-300"
-	advMaxTransfer           = 1_000_000
 	advCeiling               = 3_000_000
 )
 
@@ -60,7 +59,6 @@ func advControls(mode canonicalusdctypes.Mode) canonicalusdctypes.Controls {
 		InjectiveConnection:     "connection-1",
 		InjectivePacketDenom:    "uusdc",
 		InjectiveDenom:          advInjectiveDenom,
-		MaxTransferAmount:       dtypes.NewInt(advMaxTransfer),
 		MigrationCeiling:        dtypes.NewInt(advCeiling),
 		MaxPendingSettlements:   100,
 	}
@@ -256,17 +254,17 @@ func TestAdvMalformedInjectivePacketsLeaveNoState(t *testing.T) {
 		amount   string
 		receiver string
 	}{
-		"zero amount":          {amount: "0", receiver: advReceiver.String()},
-		"negative amount":      {amount: "-5", receiver: advReceiver.String()},
-		"non-numeric amount":   {amount: "abc", receiver: advReceiver.String()},
-		"257-bit amount":       {amount: "231584178474632390847141970017375815706539969331281128078915168015826259279872", receiver: advReceiver.String()},
-		"over max transfer":    {amount: "1000001", receiver: advReceiver.String()},
-		"invalid receiver":     {amount: "10", receiver: "not-bech32"},
-		"wrong hrp receiver":   {amount: "10", receiver: "cosmos1qqqsyqcyq5rqwzqfpg9scrgwpugpzysn5cyl7e"},
-		"blocked receiver":     {amount: "10", receiver: authtypes.NewModuleAddress(authtypes.FeeCollectorName).String()},
-		"transfer escrow mod":  {amount: "10", receiver: authtypes.NewModuleAddress(transfertypes.ModuleName).String()},
-		"empty receiver":       {amount: "10", receiver: ""},
-		"leading space amount": {amount: " 10", receiver: advReceiver.String()},
+		"zero amount":            {amount: "0", receiver: advReceiver.String()},
+		"negative amount":        {amount: "-5", receiver: advReceiver.String()},
+		"non-numeric amount":     {amount: "abc", receiver: advReceiver.String()},
+		"257-bit amount":         {amount: "231584178474632390847141970017375815706539969331281128078915168015826259279872", receiver: advReceiver.String()},
+		"over migration ceiling": {amount: "3000001", receiver: advReceiver.String()},
+		"invalid receiver":       {amount: "10", receiver: "not-bech32"},
+		"wrong hrp receiver":     {amount: "10", receiver: "cosmos1qqqsyqcyq5rqwzqfpg9scrgwpugpzysn5cyl7e"},
+		"blocked receiver":       {amount: "10", receiver: authtypes.NewModuleAddress(authtypes.FeeCollectorName).String()},
+		"transfer escrow mod":    {amount: "10", receiver: authtypes.NewModuleAddress(transfertypes.ModuleName).String()},
+		"empty receiver":         {amount: "10", receiver: ""},
+		"leading space amount":   {amount: " 10", receiver: advReceiver.String()},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
