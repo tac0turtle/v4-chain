@@ -15,10 +15,9 @@ import (
 
 func DefaultControls() Controls {
 	return Controls{
-		Mode:              Mode_MODE_DISABLED,
-		LogicalDenom:      assettypes.UusdcDenom,
-		MaxTransferAmount: dtypes.ZeroInt(),
-		MigrationCeiling:  dtypes.ZeroInt(),
+		Mode:             Mode_MODE_DISABLED,
+		LogicalDenom:     assettypes.UusdcDenom,
+		MigrationCeiling: dtypes.ZeroInt(),
 	}
 }
 
@@ -152,12 +151,7 @@ func (controls Controls) validateRoutes() error {
 }
 
 func (controls Controls) validateLimits() error {
-	maxTransfer, err := PositiveAmountOf(controls.MaxTransferAmount)
-	if err != nil {
-		return fmt.Errorf("%w: max transfer amount", ErrInvalidControls)
-	}
-	ceiling, err := PositiveAmountOf(controls.MigrationCeiling)
-	if err != nil || ceiling.LT(maxTransfer) {
+	if _, err := PositiveAmountOf(controls.MigrationCeiling); err != nil {
 		return fmt.Errorf("%w: migration ceiling", ErrInvalidControls)
 	}
 	if controls.MaxPendingSettlements == 0 || controls.MaxPendingSettlements > HardMaxPending {

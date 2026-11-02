@@ -42,8 +42,8 @@ func (d TransferDecorator) Transfer(
 		return nil, fmt.Errorf("%w: canonical transfers require the transfer port", types.ErrUnsupportedChannel)
 	}
 	amount := msg.Token.Amount
-	if err := validateTransferAmount(controls, amount); err != nil {
-		return nil, err
+	if !amount.IsPositive() {
+		return nil, types.ErrInvalidAmount
 	}
 	switch msg.SourceChannel {
 	case controls.InjectiveChannel:
@@ -60,17 +60,6 @@ func (d TransferDecorator) UpdateParams(
 	msg *transfertypes.MsgUpdateParams,
 ) (*transfertypes.MsgUpdateParamsResponse, error) {
 	return d.keeper.TransferMsgServer().UpdateParams(ctx, msg)
-}
-
-func validateTransferAmount(controls types.Controls, amount math.Int) error {
-	if !amount.IsPositive() {
-		return types.ErrInvalidAmount
-	}
-	maxAmount, err := types.PositiveAmountOf(controls.MaxTransferAmount)
-	if err != nil || amount.GT(maxAmount) {
-		return types.ErrInvalidAmount
-	}
-	return nil
 }
 
 func (d TransferDecorator) transferInjective(
