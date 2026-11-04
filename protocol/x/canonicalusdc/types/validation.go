@@ -203,6 +203,13 @@ func (pending PendingSettlement) Validate() error {
 	if pending.Sequence == 0 {
 		return fmt.Errorf("pending sequence must be positive")
 	}
-	_, err := PositiveAmountOf(pending.Amount)
+	sender, err := sdk.AccAddressFromBech32(pending.Sender)
+	if err != nil {
+		return fmt.Errorf("invalid pending sender: %w", err)
+	}
+	if sender.String() != pending.Sender {
+		return fmt.Errorf("pending sender %q is not in canonical form", pending.Sender)
+	}
+	_, err = PositiveAmountOf(pending.Amount)
 	return err
 }

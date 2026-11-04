@@ -45,11 +45,15 @@ func (d TransferDecorator) Transfer(
 	if !amount.IsPositive() {
 		return nil, types.ErrInvalidAmount
 	}
+	sender, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return nil, err
+	}
 	switch msg.SourceChannel {
 	case controls.InjectiveChannel:
-		return d.transferInjective(ctx, controls, msg, amount)
+		return d.transferInjective(ctx, controls, msg, sender, amount)
 	case controls.NobleChannel:
-		return d.transferNoble(ctx, controls, msg, amount)
+		return d.transferNoble(ctx, controls, msg, sender, amount)
 	default:
 		return nil, fmt.Errorf("%w: %s", types.ErrUnsupportedChannel, msg.SourceChannel)
 	}
@@ -66,6 +70,7 @@ func (d TransferDecorator) transferInjective(
 	ctx sdk.Context,
 	controls types.Controls,
 	msg *transfertypes.MsgTransfer,
+	sender sdk.AccAddress,
 	amount math.Int,
 ) (*transfertypes.MsgTransferResponse, error) {
 	ledger := d.keeper.GetLedger(ctx)
@@ -74,10 +79,6 @@ func (d TransferDecorator) transferInjective(
 		return nil, err
 	}
 	if ledger.PendingInjective, err = add(ledger.PendingInjective, amount); err != nil {
-		return nil, err
-	}
-	sender, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil {
 		return nil, err
 	}
 
@@ -99,7 +100,9 @@ func (d TransferDecorator) transferInjective(
 	if err != nil {
 		return nil, err
 	}
-	pending := newPending(types.Route_ROUTE_INJECTIVE, controls, msg, response.Sequence, controls.InjectiveDenom, amount)
+	pending := newPending(
+		types.Route_ROUTE_INJECTIVE, controls, msg, sender, response.Sequence, controls.InjectiveDenom, amount,
+	)
 	if err := d.keeper.SetPending(cacheCtx, pending); err != nil {
 		return nil, err
 	}
@@ -116,6 +119,7 @@ func (d TransferDecorator) transferNoble(
 	ctx sdk.Context,
 	controls types.Controls,
 	msg *transfertypes.MsgTransfer,
+	sender sdk.AccAddress,
 	amount math.Int,
 ) (*transfertypes.MsgTransferResponse, error) {
 	if !controls.NobleWithdrawalsEnabled {
@@ -135,7 +139,7 @@ func (d TransferDecorator) transferNoble(
 	if err != nil {
 		return nil, err
 	}
-	pending := newPending(types.Route_ROUTE_NOBLE, controls, msg, response.Sequence, controls.LogicalDenom, amount)
+	pending := newPending(types.Route_ROUTE_NOBLE, controls, msg, sender, response.Sequence, controls.LogicalDenom, amount)
 	if err := d.keeper.SetPending(cacheCtx, pending); err != nil {
 		return nil, err
 	}
@@ -147,10 +151,13 @@ func (d TransferDecorator) transferNoble(
 	return response, nil
 }
 
+// newPending records the sender in the canonical Bech32 form that ICS20 writes
+// into packet data, which validatePendingPacket compares against.
 func newPending(
 	route types.Route,
 	controls types.Controls,
 	msg *transfertypes.MsgTransfer,
+	sender sdk.AccAddress,
 	sequence uint64,
 	physicalDenom string,
 	amount math.Int,
@@ -159,7 +166,7 @@ func newPending(
 		Route:            route,
 		SourceChannel:    msg.SourceChannel,
 		Sequence:         sequence,
-		Sender:           msg.Sender,
+		Sender:           sender.String(),
 		LogicalReceiver:  msg.Receiver,
 		PhysicalReceiver: msg.Receiver,
 		LogicalDenom:     controls.LogicalDenom,

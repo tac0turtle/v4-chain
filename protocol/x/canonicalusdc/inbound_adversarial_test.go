@@ -2,6 +2,7 @@ package canonicalusdc_test
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/cometbft/cometbft/types"
@@ -330,17 +331,21 @@ func TestAdvInjectiveDepositCreditsLogicalOnly(t *testing.T) {
 	env.requireBacking()
 }
 
-func TestAdvInjectiveDepositToCanonicalModuleAddress(t *testing.T) {
-	env := advSetup(t, canonicalusdctypes.Mode_MODE_GRADUAL)
+func TestAdvInjectiveDepositToCanonicalModuleAddressIsRefunded(t *testing.T) {
 	module := canonicalusdctypes.ModuleAddress
-	before := env.snapshot(module)
-	ack := env.recv(env.packet("channel-1", "uusdc", "500", module.String(), ""))
-	// Accepted: the minted USDC is stranded in the module, but accounting holds.
-	require.True(t, ack.Success())
-	after := env.snapshot(module)
-	require.Equal(t, before.ModuleLogical.AddRaw(500), after.ModuleLogical)
-	require.Equal(t, "500", after.Ledger.InjectiveBacking.String())
-	env.requireBacking()
+	for encoding, receiver := range map[string]string{
+		"lowercase": module.String(),
+		"uppercase": strings.ToUpper(module.String()),
+	} {
+		t.Run(encoding, func(t *testing.T) {
+			env := advSetup(t, canonicalusdctypes.Mode_MODE_GRADUAL)
+			before := env.snapshot(module)
+			ack := env.recv(env.packet("channel-1", "uusdc", "500", receiver, ""))
+			require.False(t, ack.Success())
+			require.Equal(t, before, env.snapshot(module))
+			env.requireBacking()
+		})
+	}
 }
 
 func TestAdvNonCanonicalDenomsOnInjectiveChannelPassThrough(t *testing.T) {
