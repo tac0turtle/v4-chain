@@ -71,7 +71,7 @@ message Controls {
 
   // max_pending_settlements is the cap on concurrent in-flight canonical
   // settlements.
-  uint32 max_pending_settlements = 16;
+  uint32 max_pending_settlements = 14;
 }
 
 // Ledger accounts for backing and in-flight settlement without changing the
