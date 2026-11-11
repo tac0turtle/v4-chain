@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
@@ -11,6 +12,10 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
+
+// forwardMemoKey is the top-level memo key that packet-forward-middleware
+// reads its forwarding instruction from.
+const forwardMemoKey = "forward"
 
 type transferAuthorizationKey struct{}
 
@@ -54,7 +59,7 @@ func (d TransferDecorator) Transfer(
 	if err != nil {
 		return nil, err
 	}
-	if err := d.checkWithdrawal(ctx, controls, route); err != nil {
+	if err := d.checkWithdrawal(ctx, controls, route, msg.Memo); err != nil {
 		return nil, err
 	}
 	if route == types.Route_ROUTE_INJECTIVE {
@@ -87,14 +92,39 @@ func (d TransferDecorator) checkWithdrawal(
 	ctx sdk.Context,
 	controls types.Controls,
 	route types.Route,
+	memo string,
 ) error {
 	if route == types.Route_ROUTE_NOBLE && !controls.NobleWithdrawalsEnabled {
 		return types.ErrNobleWithdrawalsDisabled
+	}
+	if err := checkMemo(memo); err != nil {
+		return err
 	}
 	if d.keeper.PendingCount(ctx) >= controls.MaxPendingSettlements {
 		return types.ErrPendingLimit
 	}
 	return nil
+}
+
+// checkMemo rejects a packet-forward instruction. The acknowledgement of a
+// forwarded packet is held until the next hop settles, which keeps its pending
+// settlement open for as long as the sender chooses.
+func checkMemo(memo string) error {
+	if hasForwardKey(memo) {
+		return errorsmod.Wrap(types.ErrMemoNotAllowed, "packet forwarding")
+	}
+	return nil
+}
+
+// hasForwardKey decodes the memo the way packet-forward-middleware does: as a
+// JSON object whose top-level keys are matched exactly.
+func hasForwardKey(memo string) bool {
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal([]byte(memo), &fields); err != nil {
+		return false
+	}
+	_, found := fields[forwardMemoKey]
+	return found
 }
 
 func (d TransferDecorator) transferInjective(

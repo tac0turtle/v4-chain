@@ -3,7 +3,6 @@ package types
 import errorsmod "cosmossdk.io/errors"
 
 var (
-	ErrDisabled              = errorsmod.Register(ModuleName, 1, "canonical USDC routing is disabled")
 	ErrPaused                = errorsmod.Register(ModuleName, 2, "canonical USDC routing is paused")
 	ErrUnsupportedChannel    = errorsmod.Register(ModuleName, 3, "unsupported canonical USDC channel")
 	ErrInsufficientBacking   = errorsmod.Register(ModuleName, 4, "insufficient route backing")
@@ -24,6 +23,7 @@ var (
 	)
 	ErrInjectiveDepositsDisabled = errorsmod.Register(ModuleName, 19, "Injective USDC deposits are disabled")
 	ErrInvalidReceiver           = errorsmod.Register(ModuleName, 20, "invalid canonical USDC receiver")
+	ErrMemoNotAllowed            = errorsmod.Register(ModuleName, 21, "memo not allowed on canonical USDC withdrawal")
 	ErrNobleWithdrawalsDisabled  = errorsmod.Register(ModuleName, 22, "Noble USDC withdrawals are disabled")
 	ErrSettlementMismatch        = errorsmod.Register(ModuleName, 23, "pending settlement does not match packet")
 	ErrInvalidSettlement         = errorsmod.Register(ModuleName, 24, "invalid pending settlement")

@@ -473,6 +473,18 @@ func TestCanonicalTransferRejectsBeforeMovement(t *testing.T) {
 			Receiver: receiver, TimeoutTimestamp: 1,
 		}
 	}
+	funded := func(t *testing.T, ctx sdk.Context, k *Keeper, bank *bankMock) {
+		require.NoError(t, k.SetControls(ctx, activeControls()))
+		ledger := canonicaltypes.DefaultLedger()
+		ledger.NobleBacking = dtypes.NewInt(50)
+		ledger.InjectiveBacking = dtypes.NewInt(50)
+		require.NoError(t, k.SetLedger(ctx, ledger))
+		bank.set(canonicaltypes.ModuleAddress, physicalDenom, math.NewInt(50))
+	}
+	withMemo := func(msg *transfertypes.MsgTransfer, memo string) *transfertypes.MsgTransfer {
+		msg.Memo = memo
+		return msg
+	}
 	cases := []struct {
 		name string
 		prep func(*testing.T, sdk.Context, *Keeper, *bankMock)
@@ -536,6 +548,48 @@ func TestCanonicalTransferRejectsBeforeMovement(t *testing.T) {
 			},
 			msg: uusdc(transfertypes.PortID, nobleChannel, "noble1receiver", 10),
 			err: canonicaltypes.ErrInsufficientBacking,
+		},
+		{
+			name: "injective forward memo",
+			prep: funded,
+			msg: withMemo(
+				uusdc(transfertypes.PortID, injChannel, "inj1receiver", 10),
+				`{"forward":{"receiver":"x","port":"transfer","channel":"channel-9"}}`,
+			),
+			err: canonicaltypes.ErrMemoNotAllowed,
+		},
+		{
+			name: "noble forward memo",
+			prep: funded,
+			msg: withMemo(
+				uusdc(transfertypes.PortID, nobleChannel, "noble1receiver", 10),
+				`{"forward":{"receiver":"x","port":"transfer","channel":"channel-9","timeout":"8760h"}}`,
+			),
+			err: canonicaltypes.ErrMemoNotAllowed,
+		},
+		{
+			name: "noble forward memo among other keys",
+			prep: funded,
+			msg: withMemo(
+				uusdc(transfertypes.PortID, nobleChannel, "noble1receiver", 10),
+				" {\"note\":\"x\",\"forward\":{\"receiver\":\"x\"}}\n",
+			),
+			err: canonicaltypes.ErrMemoNotAllowed,
+		},
+		{
+			name: "noble forward memo with a null value",
+			prep: funded,
+			msg:  withMemo(uusdc(transfertypes.PortID, nobleChannel, "noble1receiver", 10), `{"forward":null}`),
+			err:  canonicaltypes.ErrMemoNotAllowed,
+		},
+		{
+			name: "noble forward memo with a repeated key",
+			prep: funded,
+			msg: withMemo(
+				uusdc(transfertypes.PortID, nobleChannel, "noble1receiver", 10),
+				`{"forward":{"receiver":"x"},"forward":null}`,
+			),
+			err: canonicaltypes.ErrMemoNotAllowed,
 		},
 	}
 	for _, tc := range cases {
