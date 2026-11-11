@@ -50,14 +50,17 @@ func (d TransferDecorator) Transfer(
 	if err != nil {
 		return nil, err
 	}
-	switch msg.SourceChannel {
-	case controls.InjectiveChannel:
-		return d.transferInjective(ctx, controls, msg, sender, amount)
-	case controls.NobleChannel:
-		return d.transferNoble(ctx, controls, msg, sender, amount)
-	default:
-		return nil, errorsmod.Wrapf(types.ErrUnsupportedChannel, "%s", msg.SourceChannel)
+	route, err := routeOf(controls, msg.SourceChannel)
+	if err != nil {
+		return nil, err
 	}
+	if err := d.checkWithdrawal(ctx, controls, route); err != nil {
+		return nil, err
+	}
+	if route == types.Route_ROUTE_INJECTIVE {
+		return d.transferInjective(ctx, controls, msg, sender, amount)
+	}
+	return d.transferNoble(ctx, controls, msg, sender, amount)
 }
 
 func (d TransferDecorator) UpdateParams(
@@ -65,6 +68,33 @@ func (d TransferDecorator) UpdateParams(
 	msg *transfertypes.MsgUpdateParams,
 ) (*transfertypes.MsgUpdateParamsResponse, error) {
 	return d.keeper.TransferMsgServer().UpdateParams(ctx, msg)
+}
+
+func routeOf(controls types.Controls, channel string) (types.Route, error) {
+	switch channel {
+	case controls.InjectiveChannel:
+		return types.Route_ROUTE_INJECTIVE, nil
+	case controls.NobleChannel:
+		return types.Route_ROUTE_NOBLE, nil
+	default:
+		return types.Route_ROUTE_UNSPECIFIED, errorsmod.Wrap(types.ErrUnsupportedChannel, channel)
+	}
+}
+
+// checkWithdrawal applies the admission rules that need no ledger access,
+// before any state moves or a packet is sent.
+func (d TransferDecorator) checkWithdrawal(
+	ctx sdk.Context,
+	controls types.Controls,
+	route types.Route,
+) error {
+	if route == types.Route_ROUTE_NOBLE && !controls.NobleWithdrawalsEnabled {
+		return types.ErrNobleWithdrawalsDisabled
+	}
+	if d.keeper.PendingCount(ctx) >= controls.MaxPendingSettlements {
+		return types.ErrPendingLimit
+	}
+	return nil
 }
 
 func (d TransferDecorator) transferInjective(
@@ -123,9 +153,6 @@ func (d TransferDecorator) transferNoble(
 	sender sdk.AccAddress,
 	amount math.Int,
 ) (*transfertypes.MsgTransferResponse, error) {
-	if !controls.NobleWithdrawalsEnabled {
-		return nil, types.ErrNobleWithdrawalsDisabled
-	}
 	ledger := d.keeper.GetLedger(ctx)
 	var err error
 	if ledger.NobleBacking, err = subtract(ledger.NobleBacking, amount); err != nil {

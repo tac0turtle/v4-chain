@@ -756,7 +756,7 @@ func TestInnerTransferErrorLeavesPendingAndLedgerUnchanged(t *testing.T) {
 }
 
 func TestCanonicalTransferRejectsPendingLimitBeforeMovement(t *testing.T) {
-	ctx, k, bank, _, _ := setupKeeper(t)
+	ctx, k, bank, transfer, _ := setupKeeper(t)
 	controls := activeControls()
 	controls.MaxPendingSettlements = 1
 	require.NoError(t, k.SetControls(ctx, controls))
@@ -779,6 +779,7 @@ func TestCanonicalTransferRejectsPendingLimitBeforeMovement(t *testing.T) {
 	require.Equal(t, "40", k.GetLedger(ctx).InjectiveBacking.String())
 	_, err = NewTransferDecorator(k).Transfer(ctx, msg())
 	require.ErrorIs(t, err, canonicaltypes.ErrPendingLimit)
+	require.Equal(t, 1, transfer.calls, "a withdrawal over the pending limit must not reach the transfer keeper")
 	require.Equal(t, uint32(1), k.PendingCount(ctx))
 	require.Equal(t, "40", k.GetLedger(ctx).InjectiveBacking.String())
 }
