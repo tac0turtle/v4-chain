@@ -157,7 +157,7 @@ func TestPendingSettlementRequiresCanonicalSender(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			changed := pending
 			changed.Sender = invalid
-			require.Error(t, changed.Validate())
+			require.ErrorIs(t, changed.Validate(), types.ErrInvalidSettlement)
 		})
 	}
 }

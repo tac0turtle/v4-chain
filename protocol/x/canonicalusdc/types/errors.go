@@ -20,4 +20,6 @@ var (
 	ErrModuleAccount             = errorsmod.Register(ModuleName, 18, "canonical USDC module account cannot be established")
 	ErrInjectiveDepositsDisabled = errorsmod.Register(ModuleName, 19, "Injective USDC deposits are disabled")
 	ErrInvalidReceiver           = errorsmod.Register(ModuleName, 20, "invalid canonical USDC receiver")
+	ErrSettlementMismatch        = errorsmod.Register(ModuleName, 23, "pending settlement does not match packet")
+	ErrInvalidSettlement         = errorsmod.Register(ModuleName, 24, "invalid pending settlement")
 )

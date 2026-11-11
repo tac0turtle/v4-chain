@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
 	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 	"github.com/dydxprotocol/v4-chain/protocol/x/canonicalusdc/types"
@@ -39,7 +40,7 @@ func (d TransferDecorator) Transfer(
 		return nil, err
 	}
 	if msg.SourcePort != transfertypes.PortID {
-		return nil, fmt.Errorf("%w: canonical transfers require the transfer port", types.ErrUnsupportedChannel)
+		return nil, errorsmod.Wrap(types.ErrUnsupportedChannel, "canonical transfers require the transfer port")
 	}
 	amount := msg.Token.Amount
 	if !amount.IsPositive() {
@@ -55,7 +56,7 @@ func (d TransferDecorator) Transfer(
 	case controls.NobleChannel:
 		return d.transferNoble(ctx, controls, msg, sender, amount)
 	default:
-		return nil, fmt.Errorf("%w: %s", types.ErrUnsupportedChannel, msg.SourceChannel)
+		return nil, errorsmod.Wrapf(types.ErrUnsupportedChannel, "%s", msg.SourceChannel)
 	}
 }
 

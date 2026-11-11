@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
 	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
@@ -85,7 +86,7 @@ func (k Keeper) settleInjective(
 	}
 	physicalBalance := k.bankKeeper.GetBalance(ctx, types.ModuleAddress, pending.PhysicalDenom).Amount
 	if physicalBalance.LT(injective) {
-		return ledger, fmt.Errorf("%w: physical refund missing", types.ErrInsufficientBacking)
+		return ledger, errorsmod.Wrap(types.ErrInsufficientBacking, "physical refund missing")
 	}
 	sender, err := sdk.AccAddressFromBech32(pending.Sender)
 	if err != nil {

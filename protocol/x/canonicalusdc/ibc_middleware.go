@@ -3,6 +3,7 @@ package canonicalusdc
 import (
 	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
@@ -333,22 +334,22 @@ func validatePendingPacket(
 		return err
 	}
 	if packet.SourcePort != transfertypes.PortID || packet.SourceChannel != pending.SourceChannel {
-		return fmt.Errorf("pending settlement source does not match packet")
+		return errorsmod.Wrap(types.ErrSettlementMismatch, "source")
 	}
 	packetAmount, ok := math.NewIntFromString(data.Amount)
 	pendingAmount, err := types.PositiveAmountOf(pending.Amount)
 	if !ok || err != nil || !packetAmount.Equal(pendingAmount) || data.Receiver != pending.PhysicalReceiver {
-		return fmt.Errorf("pending settlement does not match packet")
+		return errorsmod.Wrap(types.ErrSettlementMismatch, "amount or receiver")
 	}
 	expectedDenom, expectedSender := controls.NobleTrace(), pending.Sender
 	if pending.Route == types.Route_ROUTE_INJECTIVE {
 		expectedDenom, expectedSender = controls.InjectiveTrace(), types.ModuleAddress.String()
 	}
 	if data.Denom != expectedDenom {
-		return fmt.Errorf("pending settlement denom does not match packet")
+		return errorsmod.Wrap(types.ErrSettlementMismatch, "denom")
 	}
 	if data.Sender != expectedSender {
-		return fmt.Errorf("pending settlement sender does not match packet")
+		return errorsmod.Wrap(types.ErrSettlementMismatch, "sender")
 	}
 	return nil
 }
