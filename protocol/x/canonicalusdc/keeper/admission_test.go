@@ -36,6 +36,22 @@ func withdrawal(sender sdk.AccAddress, channel string, amount int64) *transferty
 	}
 }
 
+func eventAttributes(t *testing.T, ctx sdk.Context, eventType string) map[string]string {
+	t.Helper()
+	var found []sdk.Event
+	for _, event := range ctx.EventManager().Events() {
+		if event.Type == eventType {
+			found = append(found, event)
+		}
+	}
+	require.Len(t, found, 1, "events of type %s", eventType)
+	attributes := make(map[string]string, len(found[0].Attributes))
+	for _, attribute := range found[0].Attributes {
+		attributes[attribute.Key] = attribute.Value
+	}
+	return attributes
+}
+
 // A Noble-route memo is forwarded unless packet-forward-middleware would read
 // a forwarding instruction from it.
 func TestNobleWithdrawalForwardsMemosWithoutForwardKey(t *testing.T) {
@@ -61,6 +77,55 @@ func TestNobleWithdrawalForwardsMemosWithoutForwardKey(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, memo, transfer.seen.Memo)
 			require.Equal(t, uint32(1), k.PendingCount(ctx))
+		})
+	}
+}
+
+// canonical_usdc_transfer and canonical_usdc_settlement each describe the
+// withdrawal on their own: who sent how much of which denom to whom.
+func TestCanonicalEventsDescribeTheWithdrawal(t *testing.T) {
+	routes := map[string]struct {
+		channel       string
+		route         canonicaltypes.Route
+		physicalDenom string
+	}{
+		"noble":     {channel: nobleChannel, route: canonicaltypes.Route_ROUTE_NOBLE, physicalDenom: types.UusdcDenom},
+		"injective": {channel: injChannel, route: canonicaltypes.Route_ROUTE_INJECTIVE, physicalDenom: physicalDenom},
+	}
+	for name, tc := range routes {
+		t.Run(name, func(t *testing.T) {
+			ctx, k, bank, transfer, _ := setupKeeper(t)
+			require.NoError(t, k.SetControls(ctx, activeControls()))
+			sender := sdk.AccAddress("event-sender")
+			fundRoutes(t, ctx, k, bank, sender)
+			transfer.logicalOwner = sender
+
+			response, err := NewTransferDecorator(k).Transfer(ctx, withdrawal(sender, tc.channel, 10))
+			require.NoError(t, err)
+			common := map[string]string{
+				canonicaltypes.AttributeKeyRoute:         tc.route.String(),
+				canonicaltypes.AttributeKeyLogicalDenom:  types.UusdcDenom,
+				canonicaltypes.AttributeKeyPhysicalDenom: tc.physicalDenom,
+				canonicaltypes.AttributeKeySourceChannel: tc.channel,
+				canonicaltypes.AttributeKeySequence:      "7",
+				transfertypes.AttributeKeyAmount:         "10",
+				sdk.AttributeKeySender:                   sender.String(),
+				transfertypes.AttributeKeyReceiver:       "remote1receiver",
+			}
+			want := map[string]string{canonicaltypes.AttributeKeyPending: "true"}
+			for key, value := range common {
+				want[key] = value
+			}
+			require.Equal(t, want, eventAttributes(t, ctx, canonicaltypes.EventTypeCanonicalTransfer))
+
+			pending, found := k.GetPendingForPacket(ctx, tc.channel, response.Sequence)
+			require.True(t, found)
+			require.NoError(t, k.Settle(ctx, pending, true, canonicaltypes.AttributeValueSuccess))
+			want = map[string]string{canonicaltypes.AttributeKeyOutcome: canonicaltypes.AttributeValueSuccess}
+			for key, value := range common {
+				want[key] = value
+			}
+			require.Equal(t, want, eventAttributes(t, ctx, canonicaltypes.EventTypeSettlement))
 		})
 	}
 }

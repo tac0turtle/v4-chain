@@ -271,7 +271,7 @@ func (im IBCMiddleware) forwardUnsettled(
 	refunded bool,
 	forward func(sdk.Context) error,
 ) error {
-	sender, amount, ok := im.legacyNobleRefund(ctx, packet, refunded)
+	refund, ok := im.legacyNobleRefund(ctx, packet, refunded)
 	if !ok {
 		return forward(ctx)
 	}
@@ -279,32 +279,44 @@ func (im IBCMiddleware) forwardUnsettled(
 	if err := forward(cacheCtx); err != nil {
 		return err
 	}
-	if err := im.keeper.CreditLegacyNobleRefund(cacheCtx, packet, sender, amount); err != nil {
+	if err := im.keeper.CreditLegacyNobleRefund(cacheCtx, refund); err != nil {
 		return err
 	}
 	write()
 	return nil
 }
 
+// legacyNobleRefund describes a refunded Noble-trace packet as the settlement
+// it would have had if it had been sent through the module.
 func (im IBCMiddleware) legacyNobleRefund(
 	ctx sdk.Context,
 	packet channeltypes.Packet,
 	refunded bool,
-) (string, math.Int, bool) {
+) (types.PendingSettlement, bool) {
 	controls := im.keeper.GetControls(ctx)
 	if !refunded || controls.Mode == types.Mode_MODE_DISABLED ||
 		packet.SourcePort != transfertypes.PortID || packet.SourceChannel != controls.NobleChannel {
-		return "", math.Int{}, false
+		return types.PendingSettlement{}, false
 	}
 	var data transfertypes.FungibleTokenPacketData
 	if err := transfertypes.ModuleCdc.UnmarshalJSON(packet.Data, &data); err != nil {
-		return "", math.Int{}, false
+		return types.PendingSettlement{}, false
 	}
 	amount, ok := math.NewIntFromString(data.Amount)
 	if !ok || !amount.IsPositive() || data.Denom != controls.NobleTrace() {
-		return "", math.Int{}, false
+		return types.PendingSettlement{}, false
 	}
-	return data.Sender, amount, true
+	return types.PendingSettlement{
+		Route:            types.Route_ROUTE_NOBLE,
+		SourceChannel:    packet.SourceChannel,
+		Sequence:         packet.Sequence,
+		Sender:           data.Sender,
+		LogicalReceiver:  data.Receiver,
+		PhysicalReceiver: data.Receiver,
+		LogicalDenom:     controls.LogicalDenom,
+		PhysicalDenom:    controls.LogicalDenom,
+		Amount:           types.NewAmount(amount),
+	}, true
 }
 
 // isErrorAck reports whether the bytes decode to an ack that ICS20 refunds.

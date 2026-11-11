@@ -184,7 +184,7 @@ func (d TransferDecorator) transferInjective(
 		return nil, err
 	}
 	emitLogicalTransfer(cacheCtx, msg)
-	emitPending(cacheCtx, pending)
+	emitPending(cacheCtx, pending, amount)
 	write()
 	return response, nil
 }
@@ -217,7 +217,7 @@ func (d TransferDecorator) transferNoble(
 	if err := d.keeper.SetLedger(cacheCtx, ledger); err != nil {
 		return nil, err
 	}
-	emitPending(cacheCtx, pending)
+	emitPending(cacheCtx, pending, amount)
 	write()
 	return response, nil
 }
@@ -246,6 +246,9 @@ func newPending(
 	}
 }
 
+// emitLogicalTransfer emits the ICS20 transfer event for the user's logical
+// withdrawal on the Injective route. The inner transfer emits a second one for
+// the physical packet, which names the module account as sender.
 func emitLogicalTransfer(ctx sdk.Context, msg *transfertypes.MsgTransfer) {
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		transfertypes.EventTypeTransfer,
@@ -257,7 +260,7 @@ func emitLogicalTransfer(ctx sdk.Context, msg *transfertypes.MsgTransfer) {
 	))
 }
 
-func emitPending(ctx sdk.Context, pending types.PendingSettlement) {
+func emitPending(ctx sdk.Context, pending types.PendingSettlement, amount math.Int) {
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		types.EventTypeCanonicalTransfer,
 		sdk.NewAttribute(types.AttributeKeyRoute, pending.Route.String()),
@@ -265,6 +268,26 @@ func emitPending(ctx sdk.Context, pending types.PendingSettlement) {
 		sdk.NewAttribute(types.AttributeKeyPhysicalDenom, pending.PhysicalDenom),
 		sdk.NewAttribute(types.AttributeKeySourceChannel, pending.SourceChannel),
 		sdk.NewAttribute(types.AttributeKeySequence, fmt.Sprint(pending.Sequence)),
+		sdk.NewAttribute(transfertypes.AttributeKeyAmount, amount.String()),
+		sdk.NewAttribute(sdk.AttributeKeySender, pending.Sender),
+		sdk.NewAttribute(transfertypes.AttributeKeyReceiver, pending.LogicalReceiver),
 		sdk.NewAttribute(types.AttributeKeyPending, "true"),
+	))
+}
+
+// emitSettlement reports the final outcome of a withdrawal, keyed by the same
+// channel and sequence as its canonical_usdc_transfer event.
+func emitSettlement(ctx sdk.Context, settled types.PendingSettlement, amount math.Int, outcome string) {
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		types.EventTypeSettlement,
+		sdk.NewAttribute(types.AttributeKeyRoute, settled.Route.String()),
+		sdk.NewAttribute(types.AttributeKeyLogicalDenom, settled.LogicalDenom),
+		sdk.NewAttribute(types.AttributeKeyPhysicalDenom, settled.PhysicalDenom),
+		sdk.NewAttribute(types.AttributeKeySourceChannel, settled.SourceChannel),
+		sdk.NewAttribute(types.AttributeKeySequence, fmt.Sprint(settled.Sequence)),
+		sdk.NewAttribute(transfertypes.AttributeKeyAmount, amount.String()),
+		sdk.NewAttribute(sdk.AttributeKeySender, settled.Sender),
+		sdk.NewAttribute(transfertypes.AttributeKeyReceiver, settled.LogicalReceiver),
+		sdk.NewAttribute(types.AttributeKeyOutcome, outcome),
 	))
 }
