@@ -3,6 +3,7 @@ package keeper
 import (
 	"testing"
 
+	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
 	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 	"github.com/dydxprotocol/v4-chain/protocol/dtypes"
@@ -60,6 +61,34 @@ func TestNobleWithdrawalForwardsMemosWithoutForwardKey(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, memo, transfer.seen.Memo)
 			require.Equal(t, uint32(1), k.PendingCount(ctx))
+		})
+	}
+}
+
+// Rejections surface the module codespace and code in the transaction result.
+func TestRejectionsCarryModuleCodespace(t *testing.T) {
+	ctx, k, bank, _, _ := setupKeeper(t)
+	require.NoError(t, k.SetControls(ctx, activeControls()))
+	sender := sdk.AccAddress("codespace-sender")
+	fundRoutes(t, ctx, k, bank, sender)
+	decorator := NewTransferDecorator(k)
+
+	withMemo := withdrawal(sender, injChannel, 10)
+	withMemo.Memo = "partner-memo"
+	cases := map[string]struct {
+		msg  *transfertypes.MsgTransfer
+		want *errorsmod.Error
+	}{
+		"unsupported channel": {msg: withdrawal(sender, "channel-9", 10), want: canonicaltypes.ErrUnsupportedChannel},
+		"memo":                {msg: withMemo, want: canonicaltypes.ErrMemoNotAllowed},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			_, err := decorator.Transfer(ctx, tc.msg)
+			require.ErrorIs(t, err, tc.want)
+			codespace, code, _ := errorsmod.ABCIInfo(err, false)
+			require.Equal(t, canonicaltypes.ModuleName, codespace)
+			require.Equal(t, tc.want.ABCICode(), code)
 		})
 	}
 }

@@ -415,7 +415,6 @@ func TestInjectiveTransferLocksBeforePhysicalSendAndSettlesError(t *testing.T) {
 		Sender:           sender.String(),
 		Receiver:         "inj1receiver",
 		TimeoutTimestamp: 1,
-		Memo:             "partner-memo",
 	}
 	response, err := NewTransferDecorator(k).Transfer(ctx, msg)
 	require.NoError(t, err)
@@ -442,7 +441,10 @@ func TestInjectiveTransferLocksBeforePhysicalSendAndSettlesError(t *testing.T) {
 		attributes[attribute.Key] = attribute.Value
 	}
 	require.Equal(t, types.UusdcDenom, attributes[transfertypes.AttributeKeyDenom])
-	require.Equal(t, "partner-memo", attributes[transfertypes.AttributeKeyMemo])
+	require.Equal(t, sender.String(), attributes[sdk.AttributeKeySender])
+	require.Equal(t, "inj1receiver", attributes[transfertypes.AttributeKeyReceiver])
+	require.Equal(t, "10", attributes[transfertypes.AttributeKeyAmount])
+	require.Empty(t, attributes[transfertypes.AttributeKeyMemo])
 
 	pending, found := k.GetPendingForPacket(ctx, injChannel, 7)
 	require.True(t, found)
@@ -548,6 +550,21 @@ func TestCanonicalTransferRejectsBeforeMovement(t *testing.T) {
 			},
 			msg: uusdc(transfertypes.PortID, nobleChannel, "noble1receiver", 10),
 			err: canonicaltypes.ErrInsufficientBacking,
+		},
+		{
+			name: "injective plain memo",
+			prep: funded,
+			msg:  withMemo(uusdc(transfertypes.PortID, injChannel, "inj1receiver", 10), "partner-memo"),
+			err:  canonicaltypes.ErrMemoNotAllowed,
+		},
+		{
+			name: "injective wasm hook memo",
+			prep: funded,
+			msg: withMemo(
+				uusdc(transfertypes.PortID, injChannel, "inj1contract", 10),
+				`{"wasm":{"contract":"inj1contract","msg":{"deposit":{}}}}`,
+			),
+			err: canonicaltypes.ErrMemoNotAllowed,
 		},
 		{
 			name: "injective forward memo",

@@ -97,7 +97,7 @@ func (d TransferDecorator) checkWithdrawal(
 	if route == types.Route_ROUTE_NOBLE && !controls.NobleWithdrawalsEnabled {
 		return types.ErrNobleWithdrawalsDisabled
 	}
-	if err := checkMemo(memo); err != nil {
+	if err := checkMemo(route, memo); err != nil {
 		return err
 	}
 	if d.keeper.PendingCount(ctx) >= controls.MaxPendingSettlements {
@@ -106,10 +106,23 @@ func (d TransferDecorator) checkWithdrawal(
 	return nil
 }
 
-// checkMemo rejects a packet-forward instruction. The acknowledgement of a
-// forwarded packet is held until the next hop settles, which keeps its pending
-// settlement open for as long as the sender chooses.
-func checkMemo(memo string) error {
+// checkMemo rejects memos that the destination chain acts on.
+//
+// An Injective-route packet is sent by the module account, so a memo-triggered
+// call on Injective would run under one identity shared by every canonical
+// withdrawer. That route carries no memo at all.
+//
+// A Noble-route packet keeps the user's own sender, so only a packet-forward
+// instruction is rejected: the acknowledgement of a forwarded packet is held
+// until the next hop settles, which keeps its pending settlement open for as
+// long as the sender chooses.
+func checkMemo(route types.Route, memo string) error {
+	if memo == "" {
+		return nil
+	}
+	if route == types.Route_ROUTE_INJECTIVE {
+		return errorsmod.Wrap(types.ErrMemoNotAllowed, "the Injective route carries no memo")
+	}
 	if hasForwardKey(memo) {
 		return errorsmod.Wrap(types.ErrMemoNotAllowed, "packet forwarding")
 	}
