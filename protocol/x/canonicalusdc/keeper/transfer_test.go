@@ -387,7 +387,7 @@ func TestTransferPassesOriginalMessageUnchanged(t *testing.T) {
 				Sender:        sender.String(),
 				Receiver:      tc.receiver,
 			}
-			response, err := NewTransferDecorator(k).Transfer(sdk.WrapSDKContext(ctx), msg)
+			response, err := NewTransferDecorator(k).Transfer(ctx, msg)
 			require.NoError(t, err)
 			require.Equal(t, uint64(7), response.Sequence)
 			require.Same(t, msg, transfer.seen)
@@ -417,7 +417,7 @@ func TestInjectiveTransferLocksBeforePhysicalSendAndSettlesError(t *testing.T) {
 		TimeoutTimestamp: 1,
 		Memo:             "partner-memo",
 	}
-	response, err := NewTransferDecorator(k).Transfer(sdk.WrapSDKContext(ctx), msg)
+	response, err := NewTransferDecorator(k).Transfer(ctx, msg)
 	require.NoError(t, err)
 	require.Equal(t, uint64(7), response.Sequence)
 	require.Equal(t, "40", transfer.senderBalance.String(), "logical USDC must be locked before the original keeper runs")
@@ -547,7 +547,7 @@ func TestCanonicalTransferRejectsBeforeMovement(t *testing.T) {
 			} else {
 				require.NoError(t, k.SetControls(ctx, activeControls()))
 			}
-			_, err := NewTransferDecorator(k).Transfer(sdk.WrapSDKContext(ctx), tc.msg)
+			_, err := NewTransferDecorator(k).Transfer(ctx, tc.msg)
 			require.ErrorIs(t, err, tc.err)
 			require.Zero(t, transfer.calls)
 			require.Equal(t, "50", bank.amount(sender, types.UusdcDenom).String())
@@ -720,7 +720,7 @@ func TestInjectiveTransferSuccessBurnsLockedLogical(t *testing.T) {
 		Token: sdk.NewInt64Coin(types.UusdcDenom, 10), Sender: sender.String(),
 		Receiver: "inj1receiver", TimeoutTimestamp: 1,
 	}
-	response, err := NewTransferDecorator(k).Transfer(sdk.WrapSDKContext(ctx), msg)
+	response, err := NewTransferDecorator(k).Transfer(ctx, msg)
 	require.NoError(t, err)
 	pending, found := k.GetPendingForPacket(ctx, injChannel, response.Sequence)
 	require.True(t, found)
@@ -748,7 +748,7 @@ func TestInnerTransferErrorLeavesPendingAndLedgerUnchanged(t *testing.T) {
 		Token: sdk.NewInt64Coin(types.UusdcDenom, 10), Sender: sender.String(),
 		Receiver: "inj1receiver", TimeoutTimestamp: 1,
 	}
-	_, err := NewTransferDecorator(k).Transfer(sdk.WrapSDKContext(ctx), msg)
+	_, err := NewTransferDecorator(k).Transfer(ctx, msg)
 	require.ErrorContains(t, err, "remote unavailable")
 	require.Zero(t, k.PendingCount(ctx))
 	require.Equal(t, "50", k.GetLedger(ctx).InjectiveBacking.String())
@@ -773,11 +773,11 @@ func TestCanonicalTransferRejectsPendingLimitBeforeMovement(t *testing.T) {
 			Receiver: "inj1receiver", TimeoutTimestamp: 1,
 		}
 	}
-	_, err := NewTransferDecorator(k).Transfer(sdk.WrapSDKContext(ctx), msg())
+	_, err := NewTransferDecorator(k).Transfer(ctx, msg())
 	require.NoError(t, err)
 	require.Equal(t, uint32(1), k.PendingCount(ctx))
 	require.Equal(t, "40", k.GetLedger(ctx).InjectiveBacking.String())
-	_, err = NewTransferDecorator(k).Transfer(sdk.WrapSDKContext(ctx), msg())
+	_, err = NewTransferDecorator(k).Transfer(ctx, msg())
 	require.ErrorIs(t, err, canonicaltypes.ErrPendingLimit)
 	require.Equal(t, uint32(1), k.PendingCount(ctx))
 	require.Equal(t, "40", k.GetLedger(ctx).InjectiveBacking.String())
@@ -796,7 +796,7 @@ func TestNobleTransferSuccessRecordsPending(t *testing.T) {
 		Token: sdk.NewInt64Coin(types.UusdcDenom, 10), Sender: sender.String(),
 		Receiver: "noble1receiver", TimeoutTimestamp: 1,
 	}
-	response, err := NewTransferDecorator(k).Transfer(sdk.WrapSDKContext(ctx), msg)
+	response, err := NewTransferDecorator(k).Transfer(ctx, msg)
 	require.NoError(t, err)
 	require.Equal(t, types.UusdcDenom, transfer.seen.Token.Denom)
 	require.Equal(t, sender.String(), transfer.seen.Sender)
@@ -821,10 +821,10 @@ func TestDuplicatePhysicalSequenceRollsBackPending(t *testing.T) {
 		Token: sdk.NewInt64Coin(types.UusdcDenom, 10), Sender: sender.String(),
 		Receiver: "inj1receiver", TimeoutTimestamp: 1,
 	}
-	_, err := NewTransferDecorator(k).Transfer(sdk.WrapSDKContext(ctx), msg)
+	_, err := NewTransferDecorator(k).Transfer(ctx, msg)
 	require.NoError(t, err)
 	transfer.nextSequence = 7
-	_, err = NewTransferDecorator(k).Transfer(sdk.WrapSDKContext(ctx), msg)
+	_, err = NewTransferDecorator(k).Transfer(ctx, msg)
 	require.ErrorIs(t, err, canonicaltypes.ErrDuplicateSettlement)
 	require.Equal(t, uint32(1), k.PendingCount(ctx))
 	require.Equal(t, "40", k.GetLedger(ctx).InjectiveBacking.String())
