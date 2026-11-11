@@ -71,5 +71,5 @@ func TestInjectiveInboundThenNobleWithdrawRehearsal(t *testing.T) {
 		Token: sdk.NewInt64Coin(types.UusdcDenom, 1), Sender: operator.String(),
 		Receiver: "noble1receiver", TimeoutTimestamp: 1,
 	})
-	require.ErrorIs(t, err, canonicaltypes.ErrDisabled)
+	require.ErrorIs(t, err, canonicaltypes.ErrNobleWithdrawalsDisabled)
 }

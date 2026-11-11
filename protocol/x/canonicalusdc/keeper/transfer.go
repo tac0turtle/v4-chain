@@ -124,7 +124,7 @@ func (d TransferDecorator) transferNoble(
 	amount math.Int,
 ) (*transfertypes.MsgTransferResponse, error) {
 	if !controls.NobleWithdrawalsEnabled {
-		return nil, types.ErrDisabled
+		return nil, types.ErrNobleWithdrawalsDisabled
 	}
 	ledger := d.keeper.GetLedger(ctx)
 	var err error

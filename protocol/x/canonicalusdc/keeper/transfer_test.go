@@ -510,7 +510,7 @@ func TestCanonicalTransferRejectsBeforeMovement(t *testing.T) {
 				require.NoError(t, k.SetLedger(ctx, ledger))
 			},
 			msg: uusdc(transfertypes.PortID, nobleChannel, "noble1receiver", 10),
-			err: canonicaltypes.ErrDisabled,
+			err: canonicaltypes.ErrNobleWithdrawalsDisabled,
 		},
 		{
 			name: "injective rate limit exhausted",
