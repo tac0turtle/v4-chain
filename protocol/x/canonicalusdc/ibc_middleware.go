@@ -348,9 +348,12 @@ func validatePendingPacket(
 	if packet.SourcePort != transfertypes.PortID || packet.SourceChannel != pending.SourceChannel {
 		return errorsmod.Wrap(types.ErrSettlementMismatch, "source")
 	}
-	packetAmount, ok := math.NewIntFromString(data.Amount)
 	pendingAmount, err := types.PositiveAmountOf(pending.Amount)
-	if !ok || err != nil || !packetAmount.Equal(pendingAmount) || data.Receiver != pending.PhysicalReceiver {
+	if err != nil {
+		return errorsmod.Wrap(types.ErrInvalidSettlement, "amount")
+	}
+	packetAmount, ok := math.NewIntFromString(data.Amount)
+	if !ok || !packetAmount.Equal(pendingAmount) || data.Receiver != pending.PhysicalReceiver {
 		return errorsmod.Wrap(types.ErrSettlementMismatch, "amount or receiver")
 	}
 	expectedDenom, expectedSender := controls.NobleTrace(), pending.Sender

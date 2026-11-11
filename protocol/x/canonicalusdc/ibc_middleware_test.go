@@ -635,6 +635,20 @@ func TestPendingPacketMismatchLeavesPending(t *testing.T) {
 	}
 }
 
+func TestPendingPacketWithInvalidStoredAmountIsInvalidSettlement(t *testing.T) {
+	controls := receiveControls()
+	pending := types.PendingSettlement{
+		Route: types.Route_ROUTE_NOBLE, SourceChannel: controls.NobleChannel, Sequence: 17,
+		Sender: sdk.AccAddress("timeout-sender").String(), LogicalReceiver: "noble1receiver",
+		PhysicalReceiver: "noble1receiver", LogicalDenom: controls.LogicalDenom,
+		PhysicalDenom: controls.LogicalDenom, Amount: dtypes.NewInt(0),
+	}
+	packet := outboundPacket(pending, controls.NobleTrace(), pending.Sender)
+	err := validatePendingPacket(pending, controls, packet)
+	require.ErrorIs(t, err, types.ErrInvalidSettlement)
+	require.NotErrorIs(t, err, types.ErrSettlementMismatch)
+}
+
 // outboundPacket builds the packet ICS20 sends for a pending settlement. ICS20
 // writes the voucher's full denom trace into outbound packet data.
 func outboundPacket(pending types.PendingSettlement, trace, sender string) channeltypes.Packet {

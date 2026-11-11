@@ -208,6 +208,8 @@ func (pending PendingSettlement) Validate() error {
 	if sender.String() != pending.Sender {
 		return errorsmod.Wrapf(ErrInvalidSettlement, "sender %q is not in canonical form", pending.Sender)
 	}
-	_, err = PositiveAmountOf(pending.Amount)
-	return err
+	if _, err := PositiveAmountOf(pending.Amount); err != nil {
+		return errorsmod.Wrap(ErrInvalidSettlement, "amount must be positive")
+	}
+	return nil
 }

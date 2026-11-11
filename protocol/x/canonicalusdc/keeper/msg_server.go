@@ -60,7 +60,7 @@ func (k Keeper) enterGradual(ctx sdk.Context, previous types.Mode) error {
 			return err
 		}
 		if reason, broken := BackingInvariant(k)(ctx); broken {
-			return errorsmod.Wrapf(types.ErrInvalidLedger, "%s", reason)
+			return errorsmod.Wrap(types.ErrInvalidLedger, reason)
 		}
 	}
 	if k.GetControls(ctx).NobleWithdrawalsEnabled {

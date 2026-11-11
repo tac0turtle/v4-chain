@@ -161,3 +161,14 @@ func TestPendingSettlementRequiresCanonicalSender(t *testing.T) {
 		})
 	}
 }
+
+func TestPendingSettlementRequiresPositiveAmount(t *testing.T) {
+	pending := types.PendingSettlement{
+		Route:         types.Route_ROUTE_NOBLE,
+		SourceChannel: "channel-0",
+		Sequence:      1,
+		Sender:        sdk.AccAddress("pending-sender").String(),
+		Amount:        dtypes.NewInt(0),
+	}
+	require.ErrorIs(t, pending.Validate(), types.ErrInvalidSettlement)
+}
