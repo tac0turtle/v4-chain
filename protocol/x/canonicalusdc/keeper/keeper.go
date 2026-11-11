@@ -290,7 +290,9 @@ func (k Keeper) GetAllPending(ctx sdk.Context) []types.PendingSettlement {
 	return pending
 }
 
-// GetPendingPage returns one page of pending settlements in key order.
+// GetPendingPage returns one page of pending settlements in key order. A stored
+// record that does not decode is reported as ErrInvalidSettlement; any other
+// error comes from the page request.
 func (k Keeper) GetPendingPage(
 	ctx sdk.Context,
 	pageRequest *query.PageRequest,
@@ -299,7 +301,7 @@ func (k Keeper) GetPendingPage(
 	pageResponse, err := query.Paginate(k.pendingStore(ctx), pageRequest, func(_ []byte, value []byte) error {
 		var settlement types.PendingSettlement
 		if err := k.cdc.Unmarshal(value, &settlement); err != nil {
-			return err
+			return errorsmod.Wrap(types.ErrInvalidSettlement, err.Error())
 		}
 		pending = append(pending, settlement)
 		return nil
