@@ -25,7 +25,9 @@ func TestMsgCreateMarketPermissionless(t *testing.T) {
 	tests := map[string]struct {
 		ticker  string
 		hardCap uint32
-		balance *big.Int
+		// hardCapAtPerpetualCount sets the hard cap to the number of perpetuals in state.
+		hardCapAtPerpetualCount bool
+		balance                 *big.Int
 
 		expectedErr error
 	}{
@@ -39,6 +41,13 @@ func TestMsgCreateMarketPermissionless(t *testing.T) {
 			ticker:  "TEST2-USD",
 			hardCap: 0,
 			balance: big.NewInt(10_000_000_000),
+
+			expectedErr: types.ErrMarketsHardCapReached,
+		},
+		"failure - hard cap equals perpetual count": {
+			ticker:                  "TEST2-USD",
+			hardCapAtPerpetualCount: true,
+			balance:                 big.NewInt(10_000_000_000),
 
 			expectedErr: types.ErrMarketsHardCapReached,
 		},
@@ -113,7 +122,12 @@ func TestMsgCreateMarketPermissionless(t *testing.T) {
 				ms := keeper.NewMsgServerImpl(k)
 
 				// Set hard cap
-				err := k.SetMarketsHardCap(ctx, tc.hardCap)
+				numPerpetualsBefore := len(k.PerpetualsKeeper.GetAllPerpetuals(ctx))
+				hardCap := tc.hardCap
+				if tc.hardCapAtPerpetualCount {
+					hardCap = uint32(numPerpetualsBefore)
+				}
+				err := k.SetMarketsHardCap(ctx, hardCap)
 				require.NoError(t, err)
 
 				// Add TEST2-USD market to market map
@@ -155,6 +169,7 @@ func TestMsgCreateMarketPermissionless(t *testing.T) {
 				_, err = ms.CreateMarketPermissionless(ctx, &msg)
 				if tc.expectedErr != nil {
 					require.ErrorContains(t, err, tc.expectedErr.Error())
+					require.Len(t, k.PerpetualsKeeper.GetAllPerpetuals(ctx), numPerpetualsBefore)
 				} else {
 					require.NoError(t, err)
 				}

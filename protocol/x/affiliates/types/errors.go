@@ -21,4 +21,6 @@ var (
 		ModuleName, 11, "Error updating affiliate referred commission")
 	ErrUpdatingAttributedVolume = errorsmod.Register(
 		ModuleName, 12, "Error updating attributed volume")
+	ErrBlockedAffiliateAddress = errorsmod.Register(
+		ModuleName, 13, "Affiliate address is a blocked module account and cannot receive funds")
 )

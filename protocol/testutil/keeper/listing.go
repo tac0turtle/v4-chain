@@ -82,7 +82,8 @@ func ListingKeepers(
 				cdc,
 				stakingKeeper,
 			)
-			affiliatesKeeper, _ := createAffiliatesKeeper(stateStore, db, cdc, statsKeeper, transientStoreKey, true)
+			affiliatesKeeper, _ := createAffiliatesKeeper(stateStore, db, cdc, statsKeeper, bankKeeper_out,
+				transientStoreKey, true)
 			vaultKeeper, _ := createVaultKeeper(
 				stateStore,
 				db,

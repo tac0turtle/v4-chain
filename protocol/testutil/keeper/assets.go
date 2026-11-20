@@ -79,7 +79,8 @@ func AssetsKeepers(
 			cdc,
 			stakingKeeper,
 		)
-		affiliatesKeeper, _ := createAffiliatesKeeper(stateStore, db, cdc, statsKeeper, transientStoreKey, msgSenderEnabled)
+		affiliatesKeeper, _ := createAffiliatesKeeper(stateStore, db, cdc, statsKeeper, bankKeeper,
+			transientStoreKey, msgSenderEnabled)
 		vaultKeeper, _ := createVaultKeeper(stateStore, db, cdc, transientStoreKey)
 		feetiersKeeper, _ := createFeeTiersKeeper(stateStore, statsKeeper, vaultKeeper, affiliatesKeeper, db, cdc)
 		revShareKeeper, _, _ := createRevShareKeeper(stateStore, db, cdc, affiliatesKeeper, feetiersKeeper, statsKeeper)

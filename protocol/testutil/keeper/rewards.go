@@ -65,7 +65,7 @@ func RewardsKeepers(
 			cdc,
 			stakingKeeper,
 		)
-		affiliatesKeeper, _ := createAffiliatesKeeper(stateStore, db, cdc, statsKeeper, transientStoreKey, true)
+		affiliatesKeeper, _ := createAffiliatesKeeper(stateStore, db, cdc, statsKeeper, bankKeeper, transientStoreKey, true)
 		vaultKeeper, _ := createVaultKeeper(
 			stateStore,
 			db,

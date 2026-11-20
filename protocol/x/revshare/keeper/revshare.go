@@ -326,6 +326,10 @@ func (k Keeper) getAffiliateRevShares(
 	if !exists {
 		return nil, big.NewInt(0), nil
 	}
+	// Affiliates that are blocked from receiving funds receive no rev share.
+	if k.affiliatesKeeper.IsBlockedAffiliateAddress(takerAffiliateAddr) {
+		return nil, big.NewInt(0), nil
+	}
 	feesShared := lib.BigMulPpm(takerFee, lib.BigU(feeSharePpm), false)
 
 	// Cap the affiliate revenue share if it exceeds the maximum 30d affiliate revenue per referred user

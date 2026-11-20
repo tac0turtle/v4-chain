@@ -41,6 +41,7 @@ func AffiliatesKeepers(t testing.TB, msgSenderEnabled bool) (
 			db,
 			cdc,
 			statsKeeper,
+			bankKeeper,
 			transientStoreKey,
 			msgSenderEnabled,
 		)
@@ -59,6 +60,7 @@ func createAffiliatesKeeper(
 	db *dbm.MemDB,
 	cdc *codec.ProtoCodec,
 	statsKeeper *statskeeper.Keeper,
+	bankKeeper types.BankKeeper,
 	transientStoreKey storetypes.StoreKey,
 	msgSenderEnabled bool,
 ) (*affiliateskeeper.Keeper, storetypes.StoreKey) {
@@ -74,6 +76,7 @@ func createAffiliatesKeeper(
 		storeKey,
 		[]string{},
 		statsKeeper,
+		bankKeeper,
 		mockIndexerEventsManager,
 	)
 	return k, storeKey

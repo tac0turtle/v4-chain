@@ -22,6 +22,7 @@ type (
 		storeKey            storetypes.StoreKey
 		authorities         map[string]struct{}
 		statsKeeper         types.StatsKeeper
+		bankKeeper          types.BankKeeper
 		feetiersKeeper      types.FeetiersKeeper
 		indexerEventManager indexer_manager.IndexerEventManager
 	}
@@ -32,6 +33,7 @@ func NewKeeper(
 	storeKey storetypes.StoreKey,
 	authorities []string,
 	statsKeeper types.StatsKeeper,
+	bankKeeper types.BankKeeper,
 	indexerEventManager indexer_manager.IndexerEventManager,
 ) *Keeper {
 	return &Keeper{
@@ -39,6 +41,7 @@ func NewKeeper(
 		storeKey:            storeKey,
 		authorities:         lib.UniqueSliceToSet(authorities),
 		statsKeeper:         statsKeeper,
+		bankKeeper:          bankKeeper,
 		indexerEventManager: indexerEventManager,
 	}
 }
@@ -69,8 +72,12 @@ func (k Keeper) RegisterAffiliate(
 	if _, err := sdk.AccAddressFromBech32(referee); err != nil {
 		return errorsmod.Wrapf(types.ErrInvalidAddress, "referee: %s", referee)
 	}
-	if _, err := sdk.AccAddressFromBech32(affiliateAddr); err != nil {
+	affiliateAccAddr, err := sdk.AccAddressFromBech32(affiliateAddr)
+	if err != nil {
 		return errorsmod.Wrapf(types.ErrInvalidAddress, "affiliate: %s", affiliateAddr)
+	}
+	if k.bankKeeper.BlockedAddr(affiliateAccAddr) {
+		return errorsmod.Wrapf(types.ErrBlockedAffiliateAddress, "affiliate: %s", affiliateAddr)
 	}
 	if _, found := k.GetReferredBy(ctx, referee); found {
 		return errorsmod.Wrapf(types.ErrAffiliateAlreadyExistsForReferee, "referee: %s, affiliate: %s",
@@ -97,6 +104,16 @@ func (k Keeper) RegisterAffiliate(
 		),
 	)
 	return nil
+}
+
+// IsBlockedAffiliateAddress returns true if the affiliate address is a valid bech32
+// address that is blocked from receiving funds.
+func (k Keeper) IsBlockedAffiliateAddress(affiliateAddr string) bool {
+	affiliateAccAddr, err := sdk.AccAddressFromBech32(affiliateAddr)
+	if err != nil {
+		return false
+	}
+	return k.bankKeeper.BlockedAddr(affiliateAccAddr)
 }
 
 // GetReferredBy returns the affiliate address for a referee address.

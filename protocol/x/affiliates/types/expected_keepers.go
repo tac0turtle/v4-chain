@@ -16,6 +16,10 @@ type StatsKeeper interface {
 	SetEpochStats(ctx sdk.Context, epoch uint32, epochStats *stattypes.EpochStats)
 }
 
+type BankKeeper interface {
+	BlockedAddr(addr sdk.AccAddress) bool
+}
+
 type FeetiersKeeper interface {
 	GetAffiliateRefereeLowestTakerFee(ctx sdk.Context) int32
 	GetLowestMakerFee(ctx sdk.Context) int32

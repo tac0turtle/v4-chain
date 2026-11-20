@@ -1,7 +1,9 @@
 package keeper_test
 
 import (
+	"maps"
 	"math/big"
+	"slices"
 	"testing"
 	"time"
 
@@ -9,6 +11,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
+	"github.com/dydxprotocol/v4-chain/protocol/app"
 	indexerevents "github.com/dydxprotocol/v4-chain/protocol/indexer/events"
 	"github.com/dydxprotocol/v4-chain/protocol/indexer/indexer_manager"
 	testapp "github.com/dydxprotocol/v4-chain/protocol/testutil/app"
@@ -116,6 +119,28 @@ func TestRegisterAffiliate_GetReferredBy(t *testing.T) {
 			require.Equal(t, tc.affiliate, affiliate)
 		})
 	}
+}
+
+func TestRegisterAffiliate_BlockedAddress(t *testing.T) {
+	blockedAddrs := slices.Sorted(maps.Keys(app.BlockedAddresses()))
+	require.NotEmpty(t, blockedAddrs)
+
+	tApp := testapp.NewTestAppBuilder(t).Build()
+	ctx := tApp.InitChain()
+	k := tApp.App.AffiliatesKeeper
+	require.NoError(t, k.UpdateAffiliateTiers(ctx, types.DefaultAffiliateTiers))
+
+	referee := constants.AliceAccAddress.String()
+	for _, affiliate := range blockedAddrs {
+		require.True(t, k.IsBlockedAffiliateAddress(affiliate))
+		err := k.RegisterAffiliate(ctx, referee, affiliate)
+		require.ErrorIs(t, err, types.ErrBlockedAffiliateAddress)
+		_, exists := k.GetReferredBy(ctx, referee)
+		require.False(t, exists)
+	}
+
+	require.False(t, k.IsBlockedAffiliateAddress(constants.BobAccAddress.String()))
+	require.NoError(t, k.RegisterAffiliate(ctx, referee, constants.BobAccAddress.String()))
 }
 
 func TestGetReferredByEmptyAffiliate(t *testing.T) {

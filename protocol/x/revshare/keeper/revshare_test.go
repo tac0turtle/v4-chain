@@ -1,12 +1,16 @@
 package keeper_test
 
 import (
+	"maps"
 	"math/big"
+	"slices"
 	"testing"
 	"time"
 
+	"cosmossdk.io/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/dydxprotocol/v4-chain/protocol/app"
 	"github.com/dydxprotocol/v4-chain/protocol/testutil/constants"
 
 	testapp "github.com/dydxprotocol/v4-chain/protocol/testutil/app"
@@ -1555,6 +1559,61 @@ func TestKeeper_GetAllRevShares_Invalid(t *testing.T) {
 			_, err := keeper.GetAllRevShares(ctx, fill, map[string]bool{}, affiliatetypes.AffiliateParameters{})
 
 			require.ErrorIs(t, err, tc.expectedError)
+		})
+	}
+}
+
+func TestKeeper_GetAllRevShares_BlockedAffiliate(t *testing.T) {
+	blockedAddrs := slices.Sorted(maps.Keys(app.BlockedAddresses()))
+	require.NotEmpty(t, blockedAddrs)
+
+	cases := map[string]bool{
+		constants.BobAccAddress.String(): true,
+	}
+	for _, addr := range blockedAddrs {
+		cases[addr] = false
+	}
+
+	for affiliateAddr, expectAffiliateShare := range cases {
+		t.Run(affiliateAddr, func(t *testing.T) {
+			tApp := testapp.NewTestAppBuilder(t).Build()
+			ctx := tApp.InitChain()
+			revShareKeeper := tApp.App.RevShareKeeper
+			affiliatesKeeper := tApp.App.AffiliatesKeeper
+
+			require.NoError(t, affiliatesKeeper.UpdateAffiliateTiers(ctx, affiliatetypes.DefaultAffiliateTiers))
+			referee := constants.AliceAccAddress.String()
+			prefix.NewStore(
+				ctx.KVStore(tApp.App.GetKVStoreKey()[affiliatetypes.StoreKey]),
+				[]byte(affiliatetypes.ReferredByKeyPrefix),
+			).Set([]byte(referee), []byte(affiliateAddr))
+
+			affiliateParameters, err := affiliatesKeeper.GetAffiliateParameters(ctx)
+			require.NoError(t, err)
+			fill := clobtypes.FillForProcess{
+				TakerAddr:                         referee,
+				TakerFeeQuoteQuantums:             big.NewInt(10_000_000),
+				MakerAddr:                         constants.CarlAccAddress.String(),
+				MakerFeeQuoteQuantums:             big.NewInt(2_000_000),
+				FillQuoteQuantums:                 big.NewInt(100_000_000_000),
+				ProductId:                         1,
+				MarketId:                          1,
+				MonthlyRollingTakerVolumeQuantums: 1_000_000_000,
+			}
+
+			revSharesForFill, err := revShareKeeper.GetAllRevShares(ctx, fill, map[string]bool{}, affiliateParameters)
+			require.NoError(t, err)
+
+			if expectAffiliateShare {
+				require.NotNil(t, revSharesForFill.AffiliateRevShare)
+				require.Equal(t, affiliateAddr, revSharesForFill.AffiliateRevShare.Recipient)
+				return
+			}
+			require.Nil(t, revSharesForFill.AffiliateRevShare)
+			require.Equal(t, 0, revSharesForFill.FeeSourceToQuoteQuantums[types.REV_SHARE_FEE_SOURCE_TAKER_FEE].Sign())
+			for _, revShare := range revSharesForFill.AllRevShares {
+				require.NotEqual(t, types.REV_SHARE_TYPE_AFFILIATE, revShare.RevShareType)
+			}
 		})
 	}
 }

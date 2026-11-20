@@ -115,7 +115,7 @@ func NewClobKeepersTestContextWithUninitializedMemStore(
 			cdc,
 			stakingKeeper,
 		)
-		ks.AffiliatesKeeper, _ = createAffiliatesKeeper(stateStore, db, cdc, ks.StatsKeeper,
+		ks.AffiliatesKeeper, _ = createAffiliatesKeeper(stateStore, db, cdc, ks.StatsKeeper, bankKeeper,
 			indexerEventsTransientStoreKey, true)
 		ks.VaultKeeper, _ = createVaultKeeper(
 			stateStore,
